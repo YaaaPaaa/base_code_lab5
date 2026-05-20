@@ -1,0 +1,6 @@
+# Generated files
+*.o
+*.odt
+Code/documentation/
+*.dot
+*.dot.pdf

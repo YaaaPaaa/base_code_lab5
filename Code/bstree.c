@@ -137,6 +137,7 @@ const BinarySearchTree* bstree_successor(const BinarySearchTree* x) {
     return find_next(x,access);
 }
 
+
 const BinarySearchTree* bstree_predecessor(const BinarySearchTree* x) {
     ChildAccessors access = {
         .child = bstree_left,
@@ -145,19 +146,71 @@ const BinarySearchTree* bstree_predecessor(const BinarySearchTree* x) {
     return find_next(x,access);
 }
 
+/*Exercice 5 : swap_nodes, remove_node, remove*/
 void bstree_swap_nodes(ptrBinarySearchTree* tree, ptrBinarySearchTree from, ptrBinarySearchTree to) {
     assert(!bstree_empty(*tree) && !bstree_empty(from) && !bstree_empty(to));
-    (void)tree; (void)from; (void)to;
+    ptrBinarySearchTree temp = from;
+
+    from->parent = to->parent;
+    from->left = to->left;
+    from->right = to->right;
+    from->key = to->key;
+
+    to->parent = temp->parent;
+    to->left = temp->left;
+    to->right = temp->right;
+    to->key = temp->key;
 }
 
 // t -> the tree to remove from, current -> the node to remove
 void bstree_remove_node(ptrBinarySearchTree* t, ptrBinarySearchTree current) {
     assert(!bstree_empty(*t) && !bstree_empty(current));
-    (void)t; (void)current;
+    //1er cas : Suppression d'une feuille
+    if(current->left == NULL && current->right == NULL){
+        if(current->parent->left == current) current->parent->left = NULL;
+        else current->parent->right = NULL;
+        current->parent = NULL;
+        
+        bstree_delete(&current);
+    }
+
+    //2e cas : Suppresion d'un noeud n'ayant qu'un fils
+    else if((current->left != NULL) ^ (current->right != NULL)){
+        if(current->left != NULL){
+            if(current->parent->left == current) current->parent->left = current->left;
+            else current->parent->right = current->left;
+            current->left->parent = current->parent;
+            current->parent = NULL;
+            current->left = NULL;
+        } else {
+            if(current->parent->left == current) current->parent->left = current->right;
+            else current->parent->right = current->right;
+            current->right->parent = current->parent;
+            current->parent = NULL;
+            current->left = NULL;
+        }
+
+        bstree_delete(&current);
+    }
+    
+    //3e cas : Suppression d'un noeud avec deux fils
+    else {
+        const BinarySearchTree* succ = bstree_successor(current);
+        bstree_swap_nodes(t, current, (BinarySearchTree*)succ);
+
+        if(current->parent->left == current) current->parent->left = NULL;
+        else current->parent->right = NULL;
+        current->parent = NULL;
+        
+        bstree_delete(&current);
+    }
 }
 
 void bstree_remove(ptrBinarySearchTree* t, int v) {
-    (void)t; (void)v;
+    const BinarySearchTree* searched = bstree_search(*t,v);
+    if(searched != NULL){
+        bstree_remove_node(t, (BinarySearchTree*)searched);
+    }
 }
 
 /*------------------------  BSTreeVisitors  -----------------------------*/
@@ -205,8 +258,22 @@ void bstree_iterative_breadth(const BinarySearchTree* t, OperateFunctor f, void*
     delete_queue(&q);
 }
 
-void bstree_iterative_depth_infix(const BinarySearchTree* t, OperateFunctor f, void* environment) {
-    (void)t; (void) f; (void)environment;
+/*Exercice 5*/
+void bstree_iterative_depth_infix(const BinarySearchTree* t, OperateFunctor f, void* userData) {
+    assert(!bstree_empty(t));
+
+    Queue* q = create_queue();
+    queue_push(q, (void*)t);
+    
+    while(!queue_empty(q)){
+        const BinarySearchTree* noeud = queue_top(q);
+        queue_pop(q);
+        if(noeud->left != NULL) queue_push(q, noeud->left);
+        f(noeud, userData);
+        if(noeud->right != NULL)queue_push(q, noeud->right);
+    }
+
+    delete_queue(&q);
 }
 
 /*------------------------  BSTreeIterator  -----------------------------*/
