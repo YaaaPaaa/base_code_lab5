@@ -1,7 +1,7 @@
 # Generated files
 *.o
 *.odt
-Code/documentation/
+documentation/
 *.dot
 *.dot.pdf
 Code/bstreetest
