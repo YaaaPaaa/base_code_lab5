@@ -38,6 +38,11 @@ BinarySearchTree* bstree_create(void) {
  */
 BinarySearchTree* bstree_cons(BinarySearchTree* left, BinarySearchTree* right, int key) {
     BinarySearchTree* t = malloc(sizeof(struct _bstree));
+    if(t == NULL) {
+		perror("Problème d'allocation mémoire (bstree_cons)");
+		exit(EXIT_FAILURE);
+	}
+
     t->parent = NULL;
     t->left = left;
     t->right = right;
@@ -54,6 +59,7 @@ void freenode(const BinarySearchTree* t, void* n) {
     free((BinarySearchTree*)t);
 }
 
+/*Exercice 7*/
 void bstree_delete(ptrBinarySearchTree* t) {
     bstree_depth_postfix(*t, freenode, NULL);
     *t=NULL;
@@ -333,6 +339,7 @@ void bstree_iterative_depth_infix(const BinarySearchTree *t, OperateFunctor f,vo
 
 /*------------------------  BSTreeIterator  -----------------------------*/
 
+/*Exercice 6 : Tout sur l'itérateur*/
 struct _BSTreeIterator {
     /* the collection the iterator is attached to */
     const BinarySearchTree* collection;
@@ -346,31 +353,55 @@ struct _BSTreeIterator {
 
 /* minimum element of the collection */
 const BinarySearchTree* goto_min(const BinarySearchTree* e) {
-	(void)e;
-	return NULL;
+	assert(!bstree_empty(e));
+    while(!bstree_empty(bstree_predecessor(e))) e = bstree_predecessor(e);
+	return e;
 }
 
 /* maximum element of the collection */
 const BinarySearchTree* goto_max(const BinarySearchTree* e) {
-	(void)e;
-	return NULL;
+	assert(!bstree_empty(e));
+    while(!bstree_empty(bstree_successor(e))) e = bstree_successor(e);
+	return e;
 }
 
 /* constructor */
 BSTreeIterator* bstree_iterator_create(const BinarySearchTree* collection, IteratorDirection direction) {
-	(void)collection; (void)direction;
-	return NULL;
+    ptrBSTreeIterator it = malloc(sizeof(BSTreeIterator));
+	if(it == NULL) {
+		perror("Problème d'allocation mémoire (Iterator)");
+		exit(EXIT_FAILURE);
+	}
+	
+    if(direction == forward){
+        it->collection = collection;
+        it->begin = goto_min;
+        it->current = goto_min(collection);
+        it->next = bstree_successor;
+    } else {
+        it->collection = collection;
+        it->begin = goto_max;
+        it->current = goto_max(collection);
+        it->next = bstree_predecessor;
+    }
+
+	return it;
 }
 
 /* destructor */
 void bstree_iterator_delete(ptrBSTreeIterator* i) {
+    (*i)->collection = NULL;
+    (*i)->begin = NULL;
+    (*i)->current = NULL;
+    (*i)->next = NULL;
+
     free(*i);
     *i = NULL;
 }
 
 BSTreeIterator* bstree_iterator_begin(BSTreeIterator* i) {
-    i->current = i->begin(i->collection);
-    return i;
+    i->current = i->begin(i->current);
+	return i;
 }
 
 bool bstree_iterator_end(const BSTreeIterator* i) {
